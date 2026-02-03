@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Mobile Optimization: Prevent zooming and native UI behaviors -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Allergy Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            overflow-x: hidden;
+            /* Prevent pull-to-refresh on mobile for app-like feel */
+            overscroll-behavior-y: none;
+        }
+
+        /* Remove tap highlight on mobile */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Scanner Styles */
+        .scanner-wrapper {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            
+            /* Prevent text selection and context menu on hold */
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            
+            background: white;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border: 2px solid #cbd5e1;
+        }
+
+        .scanner-wrapper:active {
+            transform: scale(0.96);
+            box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.1);
+            border-color: #94a3b8;
+        }
+
+        .fingerprint-icon {
+            font-size: 5rem;
+            color: #94a3b8;
+            transition: color 0.3s ease;
+            pointer-events: none;
+        }
+
+        .scanning .fingerprint-icon {
+            color: #2563eb;
+        }
+
+        /* Scanning Beam Animation */
+        .scan-beam {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: #3b82f6;
+            box-shadow: 0 0 15px #2563eb, 0 0 25px #60a5fa;
+            opacity: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .scanning .scan-beam {
+            opacity: 1;
+            animation: scanMove 1.5s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Progress Ring */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Card Animations */
+        .card-enter {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .photo-bg {
+            transition: transform 0.5s ease;
+        }
+        .allergy-card:hover .photo-bg {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header / Hero -->
+    <div class="h-40 sm:h-48 w-full relative overflow-hidden shadow-md shrink-0">
+        <div class="absolute inset-0 bg-gradient-to-b from-blue-900/40 to-[#f1f5f9] z-10"></div>
+        <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=800&q=80" 
+             alt="Medical Lab" 
+             class="w-full h-full object-cover">
+        <div class="absolute bottom-4 left-4 z-20">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-wider drop-shadow-md">
+                <i class="fas fa-dna text-blue-700 mr-2"></i>Allergy <span class="text-blue-600">Test</span>
+            </h1>
+            <p class="text-slate-800 text-xs sm:text-sm font-bold bg-white/40 backdrop-blur-sm px-2 py-1 rounded inline-block mt-1">Advanced Sensitivity Analysis</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col max-w-lg mx-auto w-full p-4 sm:p-6 relative z-20 -mt-6 sm:-mt-8">
+        
+        <!-- Input Section -->
+        <div id="inputSection" class="bg-white border-2 border-slate-300 p-5 sm:p-6 rounded-2xl shadow-2xl mb-6 sm:mb-8">
+            <div class="grid grid-cols-1 gap-4">
+                <div>
+                    <label class="text-slate-700 text-xs uppercase font-extrabold tracking-wider mb-1 block">Subject Name</label>
+                    <input type="text" id="fullName" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-4 py-3 text-base text-slate-900 font-semibold focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition placeholder-slate-400" placeholder="Enter Full Name">
+                </div>
+                <div>
+                    <label class="text-slate-700 text-xs uppercase font-extrabold tracking-wider mb-1 block">Birth Year</label>
+                    <input type="number" id="birthYear" class="w-full bg-slate-50 border-2 border-slate-300 rounded-lg px-4 py-3 text-base text-slate-900 font-semibold focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition placeholder-slate-400" placeholder="YYYY">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div id="scannerSection" class="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+            <div class="text-center mb-8 transition-opacity duration-300" id="instructionText">
+                <p class="text-xl font-bold text-slate-800">Identity Verification Required</p>
+                <p class="text-sm text-slate-600 font-medium mt-1">Enter details above, then hold fingerprint to scan</p>
+            </div>
+
+            <!-- Fingerprint Scanner -->
+            <div class="relative" id="scannerContainer">
+                <svg class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[180px] h-[180px]" width="180" height="180">
+                    <circle class="text-slate-300" stroke-width="4" stroke="currentColor" fill="transparent" r="84" cx="90" cy="90"/>
+                    <circle class="progress-ring__circle text-blue-600" stroke-width="6" stroke-dasharray="527" stroke-dashoffset="527" stroke-linecap="round" stroke="currentColor" fill="transparent" r="84" cx="90" cy="90" id="progressCircle"/>
+                </svg>
+
+                <div class="scanner-wrapper border-2 border-slate-300" id="scanButton">
+                    <i class="fas fa-fingerprint fingerprint-icon"></i>
+                    <div class="scan-beam hidden" id="scanBeam"></div>
+                </div>
+            </div>
+            
+            <p id="statusText" class="mt-6 text-sm font-bold font-mono text-blue-700 h-6 text-center px-4"></p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultSection" class="hidden pb-10">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex-1 pr-2">
+                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">Probable Allergies: <span id="resultName" class="text-blue-700 block sm:inline"></span></h2>
+                </div>
+                <button id="resetBtn" class="bg-white border-2 border-slate-300 hover:bg-slate-100 text-slate-700 p-2 sm:p-3 rounded-lg transition shadow-md font-bold shrink-0">
+                    <i class="fas fa-redo-alt"></i>
+                </button>
+            </div>
+
+            <div id="cardsContainer" class="grid gap-4 sm:gap-5">
+                <!-- Results injected here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Database of Allergies with Photos
+        const allergies = [
+            // Fixed Item 1 (Index 0)
+            { 
+                name: "Peanuts", 
+                img: "https://img.tsn.ua/cached/236/tsn-f31867ea2500d8c162f8e1b3822736e1/thumbs/1200x630/86/f3/5809db78617ab6cc7d5cf0a03c56f386.jpeg", 
+                severity: "High Risk", 
+                desc: "Avoid nut traces." 
+            },
+            { 
+                name: "Cat Dander", 
+                img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=500", 
+                severity: "Moderate", 
+                desc: "Respiratory reaction." 
+            },
+            // Fixed Item 2 (Index 2)
+            { 
+                name: "Pollen", 
+                img: "https://images.unsplash.com/photo-1551893478-d726eaf0442c?w=500", 
+                severity: "Seasonal", 
+                desc: "Spring/Summer sensitivity." 
+            },
+            { 
+                name: "Shellfish", 
+                img: "https://images.unsplash.com/photo-1535038933256-a365f6c6d04d?w=500", 
+                severity: "Critical", 
+                desc: "Immediate epi-pen req." 
+            },
+            { 
+                name: "Dust Mites", 
+                img: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=500", 
+                severity: "Mild", 
+                desc: "Household sneezing." 
+            },
+            { 
+                name: "Dairy", 
+                img: "https://images.unsplash.com/photo-1550583724-b2692b85b150?w=500", 
+                severity: "Intolerance", 
+                desc: "Digestive discomfort." 
+            },
+            { 
+                name: "Bee Stings", 
+                img: "https://images.unsplash.com/photo-1589923188900-85dae5233271?w=500", 
+                severity: "Severe", 
+                desc: "Swelling risk." 
+            },
+            // Fixed Item 3 (Index 7)
+            { 
+                name: "Gluten", 
+                img: "https://novosheshminsk.tatarstan.ru/file/novosheshminsk/Image/4(1).jpg", 
+                severity: "Moderate", 
+                desc: "Wheat/Grain sensitivity." 
+            },
+            { 
+                name: "Soy", 
+                img: "https://images.unsplash.com/photo-1610839563038-51e6047535ba?w=500", 
+                severity: "Mild", 
+                desc: "Food ingredient alert." 
+            },
+            { 
+                name: "Latex", 
+                img: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=500", 
+                severity: "Contact", 
+                desc: "Skin irritation risk." 
+            },
+            { 
+                name: "Mold", 
+                img: "https://images.unsplash.com/photo-1585832770485-e68a5dbfad52?w=500", 
+                severity: "Chronic", 
+                desc: "Respiratory issues." 
+            },
+            { 
+                name: "Dog Dander", 
+                img: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500", 
+                severity: "Mild", 
+                desc: "Slight sneezing." 
+            }
+        ];
+
+        // UI Elements
+        const scanButton = document.getElementById('scanButton');
+        const scanBeam = document.getElementById('scanBeam');
+        const progressCircle = document.getElementById('progressCircle');
+        const statusText = document.getElementById('statusText');
+        const scannerSection = document.getElementById('scannerSection');
+        const resultSection = document.getElementById('resultSection');
+        const inputSection = document.getElementById('inputSection');
+        const nameInput = document.getElementById('fullName');
+        const yearInput = document.getElementById('birthYear');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // State variables
+        let isScanning = false;
+        let scanTimer = null;
+        let progress = 0;
+        let scanDuration = 3000; // 3 seconds hold time
+        const circumference = 527; // Circle math
+
+        // Setup SVG Circle
+        progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressCircle.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        // Scanner Handlers
+        function startScan(e) {
+            // Prevent default mobile behaviors (context menu, etc.)
+            if (e.type === 'touchstart') e.preventDefault();
+            
+            // Validation
+            if(!nameInput.value || !yearInput.value) {
+                statusText.textContent = "Error: Please enter Name and Year first.";
+                statusText.classList.add('text-red-600');
+                setTimeout(() => {
+                    statusText.textContent = "";
+                    statusText.classList.remove('text-red-600');
+                }, 2000);
+                return;
+            }
+
+            // Start Scanning
+            isScanning = true;
+            scanButton.classList.add('scanning');
+            scanBeam.classList.remove('hidden');
+            statusText.textContent = "Scanning genetic markers...";
+            statusText.classList.remove('text-red-600');
+
+            let startTime = Date.now();
+
+            scanTimer = setInterval(() => {
+                let elapsed = Date.now() - startTime;
+                progress = Math.min((elapsed / scanDuration) * 100, 100);
+                setProgress(progress);
+
+                if (progress >= 100) {
+                    completeScan();
+                }
+            }, 50);
+        }
+
+        function stopScan() {
+            if (!isScanning) return;
+            isScanning = false;
+            clearInterval(scanTimer);
+            scanButton.classList.remove('scanning');
+            scanBeam.classList.add('hidden');
+            setProgress(0);
+            statusText.textContent = "Scan aborted. Hold to complete.";
+        }
+
+        function completeScan() {
+            stopScan();
+            statusText.textContent = "Analysis Complete.";
+            statusText.classList.add('text-green-600');
+            
+            setTimeout(() => {
+                showResults();
+            }, 500);
+        }
+
+        function showResults() {
+            const name = nameInput.value;
+            
+            document.getElementById('resultName').textContent = name;
+            scannerSection.classList.add('hidden');
+            inputSection.classList.add('hidden');
+            resultSection.classList.remove('hidden');
+            
+            // Render Cards
+            cardsContainer.innerHTML = '';
+            
+            // FIXED RESULTS: Always showing Peanuts, Cat Dander, and Gluten
+            // Index 0: Peanuts
+            // Index 1: Cat Dander (Changed from Pollen)
+            // Index 7: Gluten
+            const fixedIndices = [0, 1, 7]; 
+            const selected = fixedIndices.map(i => allergies[i]);
+
+            selected.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'allergy-card group relative h-48 rounded-xl overflow-hidden shadow-xl border-2 border-slate-200 cursor-pointer card-enter bg-white';
+                card.style.animationDelay = `${index * 200}ms`;
+                
+                // Darker gradient (via-black/60) to ensure text pops on all photos
+                card.innerHTML = `
+                    <div class="photo-bg absolute inset-0 bg-cover bg-center" style="background-image: url('${item.img}');"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent"></div>
+                    <div class="absolute bottom-0 left-0 p-4 w-full">
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <h3 class="text-xl font-bold text-white mb-1 drop-shadow-md">${item.name}</h3>
+                                <p class="text-slate-200 text-xs font-medium">${item.desc}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        // Event Listeners
+        // passive: false is critical for blocking default touch behaviors on the button
+        scanButton.addEventListener('mousedown', startScan);
+        scanButton.addEventListener('touchstart', startScan, { passive: false });
+        
+        window.addEventListener('mouseup', stopScan);
+        window.addEventListener('touchend', stopScan);
+
+        resetBtn.addEventListener('click', () => {
+            resultSection.classList.add('hidden');
+            scannerSection.classList.remove('hidden');
+            inputSection.classList.remove('hidden');
+            statusText.textContent = "";
+            nameInput.value = "";
+            yearInput.value = "";
+            statusText.classList.remove('text-green-600');
+        });
+
+    </script>
+</body>
+</html>
